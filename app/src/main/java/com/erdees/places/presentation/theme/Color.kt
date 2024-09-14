@@ -1,4 +1,4 @@
-package  com.erdees.places.ui.theme
+package  com.erdees.places.presentation.theme
 
 import androidx.compose.ui.graphics.Color
 
