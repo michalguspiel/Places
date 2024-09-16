@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import timber.log.Timber
 
 
 @OptIn(FlowPreview::class)
@@ -49,7 +50,13 @@ class PlacesListViewModel : ViewModel(), KoinComponent {
             combine(
                 location,
                 keyword.debounce(200).onStart { emit("") },
-            ) { location, keyword ->
+                locationPermission
+            ) { location, keyword, locationPermission ->
+
+                if (!locationPermission) {
+                    return@combine emptyList<Place>()
+                }
+
                 if (location == null) {
                     _screenState.value =
                         PlacesListScreenState.Error(Error("Location not available"))
@@ -65,15 +72,22 @@ class PlacesListViewModel : ViewModel(), KoinComponent {
 
         viewModelScope.launch {
             locationPermission.collect { state ->
+                Timber.i("Location permission state: $state")
+                // If we receive true state when screen state is error, reset it
+                if (state && _screenState.value == PlacesListScreenState.Error(
+                        LocationPermissionMissingError()
+                    )
+                ) {
+                    resetScreenState()
+                    return@collect
+                }
+                // If we receive false state then set screen state to error
                 if (!state) {
                     _screenState.value =
                         PlacesListScreenState.Error(LocationPermissionMissingError())
                     return@collect
                 }
-                // If we receive new state when screen state is error, reset it
-                if (_screenState.value == PlacesListScreenState.Error(LocationPermissionMissingError())) {
-                    resetScreenState()
-                }
+
             }
         }
     }
