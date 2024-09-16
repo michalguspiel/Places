@@ -1,11 +1,10 @@
 package com.erdees.places.data.places
 
 import android.location.Location
-import com.erdees.places.BuildConfig
 import com.erdees.places.domain.places.PlacesRepository
+import com.erdees.places.util.BuildUtil
 import io.ktor.client.call.body
 import io.ktor.client.statement.HttpResponse
-import io.ktor.client.statement.bodyAsText
 import timber.log.Timber
 
 class PlacesRepositoryImpl(private val api: PlacesApiClient) : PlacesRepository {
@@ -15,12 +14,12 @@ class PlacesRepositoryImpl(private val api: PlacesApiClient) : PlacesRepository 
     ): Result<PlacesResponse> {
         Timber.i("Fetching places nearby")
         val response = api.getPlaces(
-            clientId = BuildConfig.CLIENT_ID,
-            clientSecret = BuildConfig.CLIENT_SECRET,
+            clientId = BuildUtil.getClientID(),
+            clientSecret = BuildUtil.getClientSecret(),
             ll = "${currentLocation.latitude},${currentLocation.longitude}",
             query = null,
-            radius = 10000,
-            limit = 50
+            radius = DEFAULT_RADIUS,
+            limit = DEFAULT_LIMIT
         )
 
         return handleApiResponse(response)
@@ -29,19 +28,19 @@ class PlacesRepositoryImpl(private val api: PlacesApiClient) : PlacesRepository 
     override suspend fun getPlacesByKey(
         currentLocation: Location, key: String
     ): Result<PlacesResponse> {
+        Timber.i("Fetching places by key")
         val response = api.getPlaces(
-            clientId = BuildConfig.CLIENT_ID,
-            clientSecret = BuildConfig.CLIENT_SECRET,
+            clientId = BuildUtil.getClientID(),
+            clientSecret = BuildUtil.getClientSecret(),
             ll = "${currentLocation.latitude},${currentLocation.longitude}",
             query = key,
-            radius = 10000,
-            limit = 15
+            radius = DEFAULT_RADIUS,
+            limit = SHORT_LIMIT
         )
         return handleApiResponse(response)
     }
 
     private suspend fun handleApiResponse(response: HttpResponse): Result<PlacesResponse> {
-        Timber.i("Handling response ${response.bodyAsText()}}")
         return try {
             val places = response.body<PlacesResponse>()
             Result.success(places)
@@ -49,5 +48,11 @@ class PlacesRepositoryImpl(private val api: PlacesApiClient) : PlacesRepository 
             Timber.e(e)
             Result.failure(e)
         }
+    }
+
+    companion object {
+        const val DEFAULT_RADIUS = 10000
+        const val DEFAULT_LIMIT = 50
+        const val SHORT_LIMIT = 20
     }
 }

@@ -1,6 +1,8 @@
 package com.erdees.places.presentation.screen.places
 
-class LocationPermissionMissingError : kotlin.Error("Location permission is missing")
+class LocationPermissionMissing : Error("Location permission is missing")
+class LocationNotAvailable : Error("Location not available")
+class NoPlacesFound : Error("No places found")
 
 sealed class PlacesListScreenState {
     data object Idle : PlacesListScreenState()

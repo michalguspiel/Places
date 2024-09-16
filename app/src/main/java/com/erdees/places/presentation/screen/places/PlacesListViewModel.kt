@@ -74,9 +74,11 @@ class PlacesListViewModel : ViewModel(), KoinComponent {
             locationPermission.collect { state ->
                 Timber.i("Location permission state: $state")
                 // If we receive true state when screen state is error, reset it
-                if (state && _screenState.value == PlacesListScreenState.Error(
-                        LocationPermissionMissingError()
-                    )
+                if (
+                    state &&
+                    _screenState.value::class == PlacesListScreenState.Error(
+                        LocationPermissionMissing()
+                    )::class
                 ) {
                     resetScreenState()
                     return@collect
@@ -84,22 +86,18 @@ class PlacesListViewModel : ViewModel(), KoinComponent {
                 // If we receive false state then set screen state to error
                 if (!state) {
                     _screenState.value =
-                        PlacesListScreenState.Error(LocationPermissionMissingError())
+                        PlacesListScreenState.Error(LocationPermissionMissing())
                     return@collect
                 }
-
             }
         }
     }
 
     private fun fetchPlacesNearby() {
-        if (screenState.value == PlacesListScreenState.Loading) {
-            return
-        }
         _screenState.value = PlacesListScreenState.Loading
         val location = location.value
         if (location == null) {
-            _screenState.value = PlacesListScreenState.Error(Error("Location not available"))
+            _screenState.value = PlacesListScreenState.Error(LocationNotAvailable())
             return
         }
         viewModelScope.launch {
@@ -109,13 +107,10 @@ class PlacesListViewModel : ViewModel(), KoinComponent {
     }
 
     private fun fetchPlacesByKey() {
-        if (screenState.value == PlacesListScreenState.Loading) {
-            return
-        }
         _screenState.value = PlacesListScreenState.Loading
         val location = location.value
         if (location == null) {
-            _screenState.value = PlacesListScreenState.Error(Error("Location not available"))
+            _screenState.value = PlacesListScreenState.Error(LocationNotAvailable())
             return
         }
         viewModelScope.launch {
@@ -137,7 +132,7 @@ class PlacesListViewModel : ViewModel(), KoinComponent {
 
         val resultPlaces = result.getOrNull()
         if (resultPlaces == null) {
-            _screenState.value = PlacesListScreenState.Error(Error("No places found"))
+            _screenState.value = PlacesListScreenState.Error(NoPlacesFound())
             return
         }
 

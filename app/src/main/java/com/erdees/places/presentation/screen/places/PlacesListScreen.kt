@@ -59,7 +59,7 @@ fun PlacesListScreen() {
         when (screenState) {
             is PlacesListScreenState.Error -> {
                 val error = (screenState as PlacesListScreenState.Error).error
-                if (error is LocationPermissionMissingError) {
+                if (error is LocationPermissionMissing) {
                     GuideToPermissions()
                 }
             }

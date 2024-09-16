@@ -10,6 +10,7 @@ import android.os.Build
 import android.os.Bundle
 import androidx.annotation.RequiresApi
 import com.erdees.places.domain.location.LocationRepository
+import com.erdees.places.util.BuildUtil
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.koin.core.component.KoinComponent
@@ -34,7 +35,7 @@ class LocationRepositoryImpl(
 
     override fun startCollectingLocation() {
         setPermissionState(true)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (BuildUtil.getBuildVersion() >= Build.VERSION_CODES.S) {
             getLocationApi31()
         } else {
             getLocation()
