@@ -1,6 +1,7 @@
 package com.erdees.places
 
 import android.app.Application
+import com.erdees.places.data.di.dataModule
 import com.erdees.places.data.location.locationModule
 import com.erdees.places.domain.permissions.permissionsModule
 import org.koin.android.ext.koin.androidContext
@@ -16,7 +17,7 @@ class PlacesApplication : Application() {
         startKoin {
             androidContext(this@PlacesApplication)
             modules(
-                listOf(locationModule, permissionsModule)
+                listOf(locationModule, permissionsModule, dataModule)
             )
         }
     }

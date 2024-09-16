@@ -123,6 +123,6 @@ class LocationRepositoryImpl(
 
     companion object {
         const val REFRESH_RATE = 2 * 1000L * 60 // 2 minutes
-        const val MIN_DISTANCE = 250F
+        const val MIN_DISTANCE = 1000F // 1km
     }
 }
