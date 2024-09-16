@@ -118,7 +118,10 @@ fun PlacesListScreenContent(
         ) {
             Column(Modifier.verticalScroll(rememberScrollState())) {
                 places.forEach {
-                    PlaceCard(place = it, modifier = Modifier.clickable { expanded = false })
+                    PlaceCard(place = it, modifier = Modifier.clickable {
+                        expanded = false
+                        onKeyWordUpdate("")
+                    })
                 }
             }
         }
