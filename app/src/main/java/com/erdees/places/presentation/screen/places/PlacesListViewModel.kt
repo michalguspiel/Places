@@ -31,6 +31,9 @@ class PlacesListViewModel : ViewModel(), KoinComponent {
     private val _places = MutableStateFlow<List<Place>>(emptyList())
     val places: StateFlow<List<Place>> = _places
 
+    private val _searchedPlaces = MutableStateFlow<List<Place>>(emptyList())
+    val searchedPlaces: StateFlow<List<Place>> = _searchedPlaces
+
     private val _screenState = MutableStateFlow<PlacesListScreenState>(PlacesListScreenState.Idle)
     val screenState: StateFlow<PlacesListScreenState> = _screenState
 
@@ -53,6 +56,10 @@ class PlacesListViewModel : ViewModel(), KoinComponent {
                 locationPermission
             ) { location, keyword, locationPermission ->
 
+                if (keyword.isEmpty()) {
+                    return@combine emptyList<Place>()
+                }
+
                 if (!locationPermission) {
                     return@combine emptyList<Place>()
                 }
@@ -60,34 +67,30 @@ class PlacesListViewModel : ViewModel(), KoinComponent {
                 if (location == null) {
                     _screenState.value =
                         PlacesListScreenState.Error(Error("Location not available"))
-                    return@combine emptyList<Place>()
                 }
-                if (keyword.isNotEmpty()) {
-                    fetchPlacesByKey()
+
+                fetchPlacesByKey()
+            }.collect {}
+        }
+
+        viewModelScope.launch {
+            location.collect {
+                if (it == null) {
+                    _screenState.value = PlacesListScreenState.Error(LocationNotAvailable())
                 } else {
                     fetchPlacesNearby()
                 }
-            }.collect {}
+            }
         }
 
         viewModelScope.launch {
             locationPermission.collect { state ->
                 Timber.i("Location permission state: $state")
-                // If we receive true state when screen state is error, reset it
-                if (
-                    state &&
-                    _screenState.value::class == PlacesListScreenState.Error(
-                        LocationPermissionMissing()
-                    )::class
-                ) {
-                    resetScreenState()
-                    return@collect
-                }
-                // If we receive false state then set screen state to error
                 if (!state) {
                     _screenState.value =
                         PlacesListScreenState.Error(LocationPermissionMissing())
-                    return@collect
+                } else {
+                    resetScreenState()
                 }
             }
         }
@@ -102,7 +105,9 @@ class PlacesListViewModel : ViewModel(), KoinComponent {
         }
         viewModelScope.launch {
             val result = placesRepository.getPlacesNearby(location)
-            handleResult(result)
+            handleResult(result)?.let {
+                _places.value = it
+            }
         }
     }
 
@@ -115,11 +120,13 @@ class PlacesListViewModel : ViewModel(), KoinComponent {
         }
         viewModelScope.launch {
             val result = placesRepository.getPlacesByKey(location, keyword.value)
-            handleResult(result)
+            handleResult(result)?.let {
+                _searchedPlaces.value = it
+            }
         }
     }
 
-    private fun handleResult(result: Result<PlacesResponse>) {
+    private fun handleResult(result: Result<PlacesResponse>): List<Place>? {
         if (result.isFailure) {
             _screenState.value =
                 PlacesListScreenState.Error(
@@ -127,18 +134,18 @@ class PlacesListViewModel : ViewModel(), KoinComponent {
                         result.exceptionOrNull()?.message ?: "Unknown error"
                     )
                 )
-            return
+            return null
         }
 
         val resultPlaces = result.getOrNull()
         if (resultPlaces == null) {
             _screenState.value = PlacesListScreenState.Error(NoPlacesFound())
-            return
+            return null
         }
 
-        _places.value = resultPlaces.response.venues
+        _screenState.value = PlacesListScreenState.Idle
+        return resultPlaces.response.venues
             .map { it.toPlace() }
             .sortedBy { it.distance }
-        _screenState.value = PlacesListScreenState.Idle
     }
 }

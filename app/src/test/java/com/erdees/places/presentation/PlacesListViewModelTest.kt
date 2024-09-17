@@ -120,7 +120,6 @@ class PlacesListViewModelTest {
     @Test
     fun `GIVEN keyword is null, WHEN location was initialized with null, THEN getPlacesNearby was not called, and ScreenState is Error`() =
         runTest {
-            locationPermission.value = true
             advanceUntilIdle()
 
             coVerify(exactly = 0) { placesRepository.getPlacesNearby(mockLocation) }
@@ -150,11 +149,11 @@ class PlacesListViewModelTest {
 
     @Test
     fun `GIVEN Repository returns Failure, THEN screenState is Error`() = runTest {
-        locationPermission.value = true
-        location.value = mockLocation
         coEvery { placesRepository.getPlacesNearby(mockLocation) } coAnswers {
             Result.failure(Exception())
         }
+        locationPermission.value = true
+        location.value = mockLocation
         advanceUntilIdle()
         cut.screenState.first()::class shouldBe PlacesListScreenState.Error::class
     }

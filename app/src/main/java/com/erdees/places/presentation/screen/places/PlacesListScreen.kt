@@ -49,6 +49,7 @@ fun PlacesListScreen() {
 
     val viewModel: PlacesListViewModel = viewModel()
     val places by viewModel.places.collectAsState()
+    val searchedPlaces by viewModel.searchedPlaces.collectAsState()
     val screenState by viewModel.screenState.collectAsState()
     val keyWord by viewModel.keyword.collectAsState()
 
@@ -69,6 +70,7 @@ fun PlacesListScreen() {
                     screenState,
                     keyWord,
                     places,
+                    searchedPlaces,
                     Modifier,
                     viewModel::updateKeyWord
                 )
@@ -83,6 +85,7 @@ fun PlacesListScreenContent(
     screenState: PlacesListScreenState,
     keyWord: String,
     places: List<Place>,
+    searchedPlaces: List<Place>,
     modifier: Modifier = Modifier,
     onKeyWordUpdate: (String) -> Unit
 ) {
@@ -117,7 +120,7 @@ fun PlacesListScreenContent(
             onExpandedChange = { expanded = it },
         ) {
             Column(Modifier.verticalScroll(rememberScrollState())) {
-                places.forEach {
+                searchedPlaces.forEach {
                     PlaceCard(place = it, modifier = Modifier.clickable {
                         expanded = false
                         onKeyWordUpdate("")
